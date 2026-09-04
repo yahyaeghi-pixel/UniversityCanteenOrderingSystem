@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M&amp;S Plant Spares — Trade Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="placeholder-banner">
+    Demo build — the trade login below uses sample accounts, not real customer credentials.
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="mark">M&amp;S</span>
+      M&amp;S Plant Spares
+      <span class="tagline">Trade Portal</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="login-wrap">
+      <h1>Trade Customer Login</h1>
+      <p class="sub">Sign in to look up your machine and find compatible parts.</p>
+
+      <div id="loginError" class="error-box"></div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="primary">Log In</button>
+      </form>
+
+      <div class="demo-hint">
+        Demo accounts: <strong>trade1</strong> / <strong>trade123</strong>
+        or <strong>demo</strong> / <strong>demo123</strong>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    &copy; M&amp;S Plant Spares. Trade customers only.
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
