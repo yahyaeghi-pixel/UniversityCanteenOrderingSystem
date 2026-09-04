@@ -7,10 +7,10 @@ public class StaffDashboard {
 
     public static void showDashboard() {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         int choice = 0;
 
-        while (choice != 6) {
+        while (choice != 8) {
 
             System.out.println("\n===== Staff Order Management =====");
             System.out.println("1. View All Orders (Students + Lecturers)");
@@ -18,7 +18,9 @@ public class StaffDashboard {
             System.out.println("3. Filter Orders by Role");
             System.out.println("4. Update Order Status");
             System.out.println("5. Delete an Order");
-            System.out.println("6. Logout");
+            System.out.println("6. Manage Menu (Add/Remove Items)");
+            System.out.println("7. Manage Feedback");
+            System.out.println("8. Logout");
             System.out.print("Choose an option: ");
 
             try {
@@ -51,6 +53,14 @@ public class StaffDashboard {
                     break;
 
                 case 6:
+                    manageMenu();
+                    break;
+
+                case 7:
+                    StaffFeedbackDashboard.showDashboard();
+                    break;
+
+                case 8:
                     System.out.println("Logging out...");
                     return;
 
@@ -58,6 +68,109 @@ public class StaffDashboard {
                     System.out.println("Invalid option. Try again.");
             }
         }
+    }
+
+
+    // ----------------- MANAGE MENU (ADD/REMOVE) -----------------
+    private static void manageMenu() {
+
+        Scanner sc = Console.IN;
+        int choice = 0;
+
+        while (choice != 3) {
+
+            System.out.println("\n===== Manage Menu =====");
+            System.out.println("1. Add Menu Item");
+            System.out.println("2. Remove Menu Item");
+            System.out.println("3. Back to Staff Main Menu");
+            System.out.print("Choose an option: ");
+
+            try {
+                choice = Integer.parseInt(sc.nextLine());
+            } catch (Exception e) {
+                System.out.println("Invalid input.");
+                continue;
+            }
+
+            switch (choice) {
+                case 1:
+                    addMenuItem();
+                    break;
+
+                case 2:
+                    removeMenuItem();
+                    break;
+
+                case 3:
+                    return;
+
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+
+    private static void addMenuItem() {
+        Scanner sc = Console.IN;
+
+        System.out.println("\n===== Add Menu Item =====");
+        System.out.print("Enter new item name: ");
+        String name = sc.nextLine();
+
+        System.out.print("Enter price (e.g., 6.50): ");
+        double price;
+
+        try {
+            price = Double.parseDouble(sc.nextLine());
+        } catch (Exception e) {
+            System.out.println("Invalid price.");
+            return;
+        }
+
+        var menu = MenuDatabase.loadMenu();
+        menu.add(new MenuItem(name, price));
+        MenuDatabase.saveAllMenu(menu);
+
+        System.out.println("Menu item added successfully!");
+    }
+
+    private static void removeMenuItem() {
+
+        var menu = MenuDatabase.loadMenu();
+
+        if (menu.isEmpty()) {
+            System.out.println("Menu is empty.");
+            return;
+        }
+
+        System.out.println("\n===== Remove Menu Item =====");
+
+        for (int i = 0; i < menu.size(); i++) {
+            System.out.println((i + 1) + ". " + menu.get(i).getName() +
+                               " – €" + menu.get(i).getPrice());
+        }
+
+        System.out.print("Enter the item number to remove: ");
+        Scanner sc = Console.IN;
+
+        int choice;
+
+        try {
+            choice = Integer.parseInt(sc.nextLine());
+        } catch (Exception e) {
+            System.out.println("Invalid input.");
+            return;
+        }
+
+        if (choice < 1 || choice > menu.size()) {
+            System.out.println("Invalid item number.");
+            return;
+        }
+
+        MenuItem removed = menu.remove(choice - 1);
+        MenuDatabase.saveAllMenu(menu);
+
+        System.out.println("Removed item: " + removed.getName());
     }
 
 
@@ -86,7 +199,7 @@ public class StaffDashboard {
     // ----------------- SEARCH BY EMAIL -----------------
     private static void searchOrdersByEmail() {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         System.out.print("Enter email to search: ");
         String email = sc.nextLine();
 
@@ -111,7 +224,7 @@ public class StaffDashboard {
     // ----------------- FILTER BY ROLE (student / lecturer) -----------------
     private static void filterOrdersByRole() {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         System.out.print("Enter role to filter (student/lecturer): ");
         String role = sc.nextLine().toLowerCase();
 
@@ -157,7 +270,7 @@ public class StaffDashboard {
 
         viewAllOrders();
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         System.out.print("Enter order number to update: ");
 
         int index;
@@ -235,7 +348,7 @@ public class StaffDashboard {
 
         viewAllOrders();
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         System.out.print("Enter order number to delete: ");
 
         int index;

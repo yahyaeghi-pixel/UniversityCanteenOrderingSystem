@@ -1,0 +1,5 @@
+# Compiled build output (Eclipse output folder)
+/bin/
+
+# OS
+.DS_Store

@@ -6,7 +6,7 @@ public class MainMenu {
 
     public static void main(String[] args) {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         int choice = 0;
 
         while (choice != 3) {
@@ -41,6 +41,5 @@ public class MainMenu {
             }
         }
 
-        sc.close();
     }
 }

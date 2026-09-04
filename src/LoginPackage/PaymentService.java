@@ -6,7 +6,7 @@ public class PaymentService {
 
     public static boolean processPayment(double totalAmount) {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
 
         System.out.println("\n===== Payment Section =====");
         System.out.println("Total Amount: €" + totalAmount);

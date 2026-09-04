@@ -257,11 +257,15 @@ public class CanteenAppGUI {
         JButton refreshBtn = new JButton("Refresh Menu");
         JButton orderBtn = new JButton("Order Selected Item");
         JButton myOrdersBtn = new JButton("View My Orders");
+        JButton notificationsBtn = new JButton("View Notifications");
+        JButton feedbackBtn = new JButton("Give Feedback");
         JButton backBtn = new JButton("Logout");
 
         bottom.add(refreshBtn);
         bottom.add(orderBtn);
         bottom.add(myOrdersBtn);
+        bottom.add(notificationsBtn);
+        bottom.add(feedbackBtn);
         bottom.add(backBtn);
 
         p.add(bottom, BorderLayout.SOUTH);
@@ -290,23 +294,11 @@ public class CanteenAppGUI {
                     "Order placed for " + item.getName() + " (status: Pending)");
         });
 
-        myOrdersBtn.addActionListener(e -> {
-            if (loggedInUser == null) return;
-            java.util.List<Order> orders = OrderDatabase.loadOrders();
-            StringBuilder sb = new StringBuilder();
-            sb.append("Orders for ").append(loggedInUser.getEmail()).append(":\n\n");
-            for (Order o : orders) {
-                if (o.getEmail().equalsIgnoreCase(loggedInUser.getEmail())) {
-                    sb.append(o.getItemName()).append(" €")
-                      .append(o.getItemPrice())
-                      .append(" | ").append(o.getDate())
-                      .append(" | Status: ").append(o.getStatus())
-                      .append("\n");
-                }
-            }
-            JOptionPane.showMessageDialog(frame,
-                    sb.length() == 0 ? "No orders yet." : sb.toString());
-        });
+        myOrdersBtn.addActionListener(e -> showMyOrders());
+
+        notificationsBtn.addActionListener(e -> showMyNotifications());
+
+        feedbackBtn.addActionListener(e -> submitFeedback());
 
         backBtn.addActionListener(e -> {
             loggedInUser = null;
@@ -322,6 +314,54 @@ public class CanteenAppGUI {
         for (MenuItem m : currentMenuItems) {
             studentMenuModel.addElement(m.getName() + " - €" + m.getPrice());
         }
+    }
+
+    // --------------------------------------------------------------------
+    // SHARED (STUDENT + LECTURER) HELPERS
+    // --------------------------------------------------------------------
+    private void showMyOrders() {
+        if (loggedInUser == null) return;
+        java.util.List<Order> orders = OrderDatabase.loadOrders();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Orders for ").append(loggedInUser.getEmail()).append(":\n\n");
+        boolean found = false;
+        for (Order o : orders) {
+            if (o.getEmail().equalsIgnoreCase(loggedInUser.getEmail())) {
+                found = true;
+                sb.append(o.getItemName()).append(" €")
+                  .append(o.getItemPrice())
+                  .append(" | ").append(o.getDate())
+                  .append(" | Status: ").append(o.getStatus())
+                  .append("\n");
+            }
+        }
+        JOptionPane.showMessageDialog(frame, found ? sb.toString() : "No orders yet.");
+    }
+
+    private void showMyNotifications() {
+        if (loggedInUser == null) return;
+        java.util.List<Notification> list = NotificationDatabase.loadNotifications();
+        StringBuilder sb = new StringBuilder();
+        for (Notification n : list) {
+            if (n.getEmail().equalsIgnoreCase(loggedInUser.getEmail())) {
+                sb.append("- ").append(n.getMessage())
+                  .append(" (").append(n.getDate()).append(")\n");
+            }
+        }
+        JOptionPane.showMessageDialog(frame,
+                sb.length() == 0 ? "No notifications yet." : sb.toString());
+    }
+
+    private void submitFeedback() {
+        if (loggedInUser == null) return;
+        String msg = JOptionPane.showInputDialog(frame, "Write your feedback message:");
+        if (msg == null || msg.trim().isEmpty()) return;
+
+        String date = java.time.LocalDateTime.now().toString();
+        Feedback fb = new Feedback(loggedInUser.getEmail(), msg.trim(), date);
+        FeedbackDatabase.saveFeedback(fb);
+
+        JOptionPane.showMessageDialog(frame, "Thank you! Your feedback has been submitted.");
     }
 
     // --------------------------------------------------------------------
@@ -341,53 +381,50 @@ public class CanteenAppGUI {
 
         JPanel bottom = new JPanel();
         JButton refreshBtn = new JButton("Refresh Menu");
-        JButton addBtn = new JButton("Add Item");
-        JButton removeBtn = new JButton("Remove Selected");
+        JButton orderBtn = new JButton("Order Selected Item");
+        JButton myOrdersBtn = new JButton("View My Orders");
+        JButton notificationsBtn = new JButton("View Notifications");
+        JButton feedbackBtn = new JButton("Give Feedback");
         JButton backBtn = new JButton("Logout");
 
         bottom.add(refreshBtn);
-        bottom.add(addBtn);
-        bottom.add(removeBtn);
+        bottom.add(orderBtn);
+        bottom.add(myOrdersBtn);
+        bottom.add(notificationsBtn);
+        bottom.add(feedbackBtn);
         bottom.add(backBtn);
 
         p.add(bottom, BorderLayout.SOUTH);
 
         refreshBtn.addActionListener(e -> refreshLecturerMenu());
 
-        addBtn.addActionListener(e -> {
-            String name = JOptionPane.showInputDialog(frame,
-                    "Enter item name:");
-            if (name == null || name.trim().isEmpty()) return;
-
-            String priceStr = JOptionPane.showInputDialog(frame,
-                    "Enter price (e.g. 6.50):");
-            if (priceStr == null) return;
-            try {
-                double price = Double.parseDouble(priceStr);
-                ArrayList<MenuItem> menu = MenuDatabase.loadMenu();
-                menu.add(new MenuItem(name.trim(), price));
-                MenuDatabase.saveAllMenu(menu);
-                refreshLecturerMenu();
-                JOptionPane.showMessageDialog(frame, "Item added.");
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Invalid price.");
+        orderBtn.addActionListener(e -> {
+            if (loggedInUser == null) {
+                JOptionPane.showMessageDialog(frame, "Not logged in.");
+                return;
             }
-        });
-
-        removeBtn.addActionListener(e -> {
             int idx = lecturerMenuList.getSelectedIndex();
-            if (idx < 0) {
+            if (idx < 0 || idx >= currentMenuItems.size()) {
                 JOptionPane.showMessageDialog(frame, "Select an item first.");
                 return;
             }
-            ArrayList<MenuItem> menu = MenuDatabase.loadMenu();
-            if (idx >= menu.size()) return;
-            MenuItem removed = menu.remove(idx);
-            MenuDatabase.saveAllMenu(menu);
-            refreshLecturerMenu();
+            MenuItem item = currentMenuItems.get(idx);
+            String datetime = java.time.LocalDateTime.now().toString();
+            Order order = new Order(loggedInUser.getEmail(),
+                                    item.getName(),
+                                    item.getPrice(),
+                                    datetime,
+                                    "Pending");
+            OrderDatabase.saveOrder(order);
             JOptionPane.showMessageDialog(frame,
-                    "Removed: " + removed.getName());
+                    "Order placed for " + item.getName() + " (status: Pending)");
         });
+
+        myOrdersBtn.addActionListener(e -> showMyOrders());
+
+        notificationsBtn.addActionListener(e -> showMyNotifications());
+
+        feedbackBtn.addActionListener(e -> submitFeedback());
 
         backBtn.addActionListener(e -> {
             loggedInUser = null;
@@ -398,9 +435,9 @@ public class CanteenAppGUI {
     }
 
     private void refreshLecturerMenu() {
-        java.util.List<MenuItem> menu = MenuDatabase.loadMenu();
+        currentMenuItems = MenuDatabase.loadMenu();
         lecturerMenuModel.clear();
-        for (MenuItem m : menu) {
+        for (MenuItem m : currentMenuItems) {
             lecturerMenuModel.addElement(m.getName() + " - €" + m.getPrice());
         }
     }
@@ -422,28 +459,62 @@ public class CanteenAppGUI {
 
         JPanel bottom = new JPanel();
         JButton refreshBtn = new JButton("Refresh Orders");
+        JButton searchBtn = new JButton("Search by Email");
+        JButton filterBtn = new JButton("Filter by Role");
         JButton updateStatusBtn = new JButton("Update Order Status");
+        JButton deleteBtn = new JButton("Delete Order");
+        JButton menuBtn = new JButton("Manage Menu");
+        JButton feedbackBtn = new JButton("Manage Feedback");
         JButton backBtn = new JButton("Back");
 
         bottom.add(refreshBtn);
+        bottom.add(searchBtn);
+        bottom.add(filterBtn);
         bottom.add(updateStatusBtn);
+        bottom.add(deleteBtn);
+        bottom.add(menuBtn);
+        bottom.add(feedbackBtn);
         bottom.add(backBtn);
         p.add(bottom, BorderLayout.SOUTH);
 
-        refreshBtn.addActionListener(e -> {
+        Runnable showAllOrders = () -> {
             java.util.List<Order> orders = OrderDatabase.loadOrders();
-            StringBuilder sb = new StringBuilder();
-            int i = 1;
-            for (Order o : orders) {
-                sb.append(i++).append(". ")
-                  .append(o.getEmail()).append(" - ")
-                  .append(o.getItemName()).append(" €").append(o.getItemPrice())
-                  .append(" | ").append(o.getDate())
-                  .append(" | Status: ").append(o.getStatus())
-                  .append("\n");
+            ordersArea.setText(formatOrders(orders));
+        };
+
+        refreshBtn.addActionListener(e -> showAllOrders.run());
+
+        searchBtn.addActionListener(e -> {
+            String email = JOptionPane.showInputDialog(frame, "Enter email to search:");
+            if (email == null || email.trim().isEmpty()) return;
+
+            java.util.List<Order> matches = new ArrayList<>();
+            for (Order o : OrderDatabase.loadOrders()) {
+                if (o.getEmail().equalsIgnoreCase(email.trim())) {
+                    matches.add(o);
+                }
             }
-            if (sb.length() == 0) sb.append("No orders.");
-            ordersArea.setText(sb.toString());
+            ordersArea.setText("Orders for " + email + ":\n\n" + formatOrders(matches));
+        });
+
+        filterBtn.addActionListener(e -> {
+            String[] roles = {"student", "lecturer"};
+            String role = (String) JOptionPane.showInputDialog(frame,
+                    "Filter orders by role:", "Filter by Role",
+                    JOptionPane.PLAIN_MESSAGE, null, roles, roles[0]);
+            if (role == null) return;
+
+            ArrayList<User> users = UserDatabase.loadUsers();
+            java.util.List<Order> matches = new ArrayList<>();
+            for (Order o : OrderDatabase.loadOrders()) {
+                for (User u : users) {
+                    if (u.getEmail().equalsIgnoreCase(o.getEmail()) &&
+                        u.getRole().equalsIgnoreCase(role)) {
+                        matches.add(o);
+                    }
+                }
+            }
+            ordersArea.setText("Orders from " + role + "s:\n\n" + formatOrders(matches));
         });
 
         updateStatusBtn.addActionListener(e -> {
@@ -475,12 +546,48 @@ public class CanteenAppGUI {
                 if (newStatus == null) return;
                 o.setStatus(newStatus);
                 OrderDatabase.saveAllOrders(new ArrayList<>(orders));
+
+                if (newStatus.equals("Ready")) {
+                    String msg = "Your order for " + o.getItemName() + " is READY!";
+                    String date = java.time.LocalDateTime.now().toString();
+                    NotificationDatabase.saveNotification(new Notification(o.getEmail(), msg, date));
+                }
+
                 JOptionPane.showMessageDialog(frame, "Status updated.");
-                refreshBtn.doClick();
+                showAllOrders.run();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(frame, "Invalid number.");
             }
         });
+
+        deleteBtn.addActionListener(e -> {
+            java.util.List<Order> orders = OrderDatabase.loadOrders();
+            if (orders.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "No orders.");
+                return;
+            }
+            String indexStr = JOptionPane.showInputDialog(frame,
+                    "Enter order number to delete:");
+            if (indexStr == null) return;
+            try {
+                int idx = Integer.parseInt(indexStr);
+                if (idx < 1 || idx > orders.size()) {
+                    JOptionPane.showMessageDialog(frame, "Invalid number.");
+                    return;
+                }
+                Order removed = orders.remove(idx - 1);
+                OrderDatabase.saveAllOrders(new ArrayList<>(orders));
+                JOptionPane.showMessageDialog(frame,
+                        "Deleted order: " + removed.getItemName() + " from " + removed.getEmail());
+                showAllOrders.run();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid number.");
+            }
+        });
+
+        menuBtn.addActionListener(e -> showManageMenuDialog());
+
+        feedbackBtn.addActionListener(e -> showManageFeedbackDialog());
 
         backBtn.addActionListener(e -> {
             loggedInUser = null;
@@ -488,5 +595,135 @@ public class CanteenAppGUI {
         });
 
         return p;
+    }
+
+    private String formatOrders(java.util.List<Order> orders) {
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+        for (Order o : orders) {
+            sb.append(i++).append(". ")
+              .append(o.getEmail()).append(" - ")
+              .append(o.getItemName()).append(" €").append(o.getItemPrice())
+              .append(" | ").append(o.getDate())
+              .append(" | Status: ").append(o.getStatus())
+              .append("\n");
+        }
+        if (sb.length() == 0) sb.append("No orders.");
+        return sb.toString();
+    }
+
+    // --------------------------------------------------------------------
+    // STAFF: MANAGE MENU (ADD/REMOVE)
+    // --------------------------------------------------------------------
+    private void showManageMenuDialog() {
+        ArrayList<MenuItem> menu = MenuDatabase.loadMenu();
+
+        StringBuilder sb = new StringBuilder("Current Menu:\n\n");
+        for (int i = 0; i < menu.size(); i++) {
+            sb.append(i + 1).append(". ").append(menu.get(i).getName())
+              .append(" - €").append(menu.get(i).getPrice()).append("\n");
+        }
+        if (menu.isEmpty()) sb.append("(empty)\n");
+
+        String[] options = {"Add Item", "Remove Item", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(frame, sb.toString(), "Manage Menu",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null, options, options[2]);
+
+        if (choice == 0) {
+            String name = JOptionPane.showInputDialog(frame, "Enter item name:");
+            if (name == null || name.trim().isEmpty()) return;
+
+            String priceStr = JOptionPane.showInputDialog(frame, "Enter price (e.g. 6.50):");
+            if (priceStr == null) return;
+            try {
+                double price = Double.parseDouble(priceStr);
+                menu.add(new MenuItem(name.trim(), price));
+                MenuDatabase.saveAllMenu(menu);
+                refreshStudentMenu();
+                refreshLecturerMenu();
+                JOptionPane.showMessageDialog(frame, "Item added.");
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid price.");
+            }
+        } else if (choice == 1) {
+            if (menu.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "Menu is empty.");
+                return;
+            }
+            String indexStr = JOptionPane.showInputDialog(frame, "Enter item number to remove:");
+            if (indexStr == null) return;
+            try {
+                int idx = Integer.parseInt(indexStr);
+                if (idx < 1 || idx > menu.size()) {
+                    JOptionPane.showMessageDialog(frame, "Invalid item number.");
+                    return;
+                }
+                MenuItem removed = menu.remove(idx - 1);
+                MenuDatabase.saveAllMenu(menu);
+                refreshStudentMenu();
+                refreshLecturerMenu();
+                JOptionPane.showMessageDialog(frame, "Removed: " + removed.getName());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid number.");
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // STAFF: MANAGE FEEDBACK (VIEW/SEARCH/DELETE)
+    // --------------------------------------------------------------------
+    private void showManageFeedbackDialog() {
+        ArrayList<Feedback> list = FeedbackDatabase.loadFeedback();
+
+        StringBuilder sb = new StringBuilder("All Feedback:\n\n");
+        for (int i = 0; i < list.size(); i++) {
+            Feedback f = list.get(i);
+            sb.append(i + 1).append(". ").append(f.getEmail())
+              .append(" - \"").append(f.getMessage()).append("\" (")
+              .append(f.getDate()).append(")\n");
+        }
+        if (list.isEmpty()) sb.append("(none)\n");
+
+        String[] options = {"Search by Email", "Delete Feedback", "Close"};
+        int choice = JOptionPane.showOptionDialog(frame, sb.toString(), "Manage Feedback",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
+                null, options, options[2]);
+
+        if (choice == 0) {
+            String email = JOptionPane.showInputDialog(frame, "Enter email to search:");
+            if (email == null || email.trim().isEmpty()) return;
+
+            StringBuilder found = new StringBuilder("Feedback from " + email + ":\n\n");
+            boolean any = false;
+            for (Feedback f : list) {
+                if (f.getEmail().equalsIgnoreCase(email.trim())) {
+                    any = true;
+                    found.append("- \"").append(f.getMessage()).append("\" on ")
+                         .append(f.getDate()).append("\n");
+                }
+            }
+            JOptionPane.showMessageDialog(frame,
+                    any ? found.toString() : "No feedback found for this email.");
+        } else if (choice == 1) {
+            if (list.isEmpty()) {
+                JOptionPane.showMessageDialog(frame, "No feedback to delete.");
+                return;
+            }
+            String indexStr = JOptionPane.showInputDialog(frame, "Enter feedback number to delete:");
+            if (indexStr == null) return;
+            try {
+                int idx = Integer.parseInt(indexStr);
+                if (idx < 1 || idx > list.size()) {
+                    JOptionPane.showMessageDialog(frame, "Invalid number.");
+                    return;
+                }
+                Feedback removed = list.remove(idx - 1);
+                FeedbackDatabase.saveAllFeedback(list);
+                JOptionPane.showMessageDialog(frame, "Deleted feedback from: " + removed.getEmail());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid number.");
+            }
+        }
     }
 }
