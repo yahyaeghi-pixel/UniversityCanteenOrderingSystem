@@ -1,26 +1,38 @@
-# M&S Plant Spares — Trade Portal (Demo Build)
+# M&S Plant Spares — Trade Portal
 
-A basic static website for M&S Plant Spares trade customers to log in, look up
-their machine via cascading **Make → Model → Version 1 → Version 2** dropdowns,
-and search for compatible parts.
+A static website for M&S Plant Spares trade customers to log in, look up
+their machine via cascading **Make → Model → Version 1 → Version 2**
+dropdowns, and search for compatible parts — plus a direct search by part
+number or cross-reference / OEM number.
 
 ## Status
 
-This is a working scaffold using **sample placeholder data** so the full flow
-(login → machine lookup → search → results) can be reviewed before real data
-is added. Nothing here is real M&S Plant Spares product, pricing, or customer
-data.
+The product, compatibility and cross-reference data is **real**, generated
+from the supplied spreadsheets covering 5 categories:
+
+- Idlers
+- Injectors
+- Dummy Pins
+- Bolt On Rubber Pads
+- Rubber Tracks
+
+That's 259 parts, ~3,940 unique machine Make/Model/Version1/Version2
+combinations, ~7,365 machine-to-part compatibility links, and cross
+reference/OEM numbers, all baked into `js/data.js`.
+
+The **trade customer login is still a demo/placeholder** — see Limitations
+below.
 
 ## Structure
 
 ```
 ms-plant-spares-website/
 ├── index.html        Trade login page
-├── lookup.html        Machine Lookup + parts search/results (login required)
-├── css/style.css      All styling
-├── js/data.js          Sample trade accounts, machines, and parts data
-├── js/auth.js          Login handling + simple session gate
-└── js/lookup.js        Cascading dropdown logic + parts search/results
+├── lookup.html         Machine Lookup + parts search/results + part/cross-reference search (login required)
+├── css/style.css       All styling
+├── js/data.js           Trade accounts (placeholder) + real MACHINES and PARTS data
+├── js/auth.js           Login handling + simple session gate
+└── js/lookup.js         Cascading dropdown logic, parts search, part/cross-reference search
 ```
 
 ## Running it
@@ -40,27 +52,37 @@ Then visit `http://localhost:8000`.
 - `trade1` / `trade123`
 - `demo` / `demo123`
 
-## Important limitations (by design, for this first pass)
+## How the data is structured (`js/data.js`)
+
+- **`MACHINES`** — every real Make / Model / Version 1 / Version 2 /
+  Machine Type combination found in the source spreadsheets. `version1`/
+  `version2` of `"-"` means "not applicable / not specified" for that
+  variant (shown as "N/A" in the dropdowns).
+- **`PARTS`** — one entry per part (`sku`, category/subCategory, title,
+  price, weight, stock status, MS part number, `crossReference` list of
+  OEM/cross-reference numbers, `compatibleMachineIds` linking to
+  `MACHINES`, plus any extra dimension/attribute fields from the source
+  sheet).
+- **`TRADE_ACCOUNTS`** — still sample/placeholder (see Limitations).
+
+Note: Dummy Pins have no machine compatibility data in the source file (they
+are sized by diameter/length, not machine-specific), so they won't appear
+in the Machine Lookup results, but they are searchable via the Part
+Number / Cross Reference search.
+
+## Important limitations (by design, for this pass)
 
 - **Login is not secure.** Credentials are checked in the browser against
-  `js/data.js` and the "session" is just `sessionStorage`. This is fine for
-  demonstrating the flow, but must **not** be used to protect real trade
-  pricing or customer data. A production version needs a real backend with
-  hashed passwords and server-side sessions.
-- **Data is placeholder.** `MACHINES` and `PARTS` in `js/data.js` are made up.
+  `TRADE_ACCOUNTS` in `js/data.js` and the "session" is just
+  `sessionStorage`. This is fine for demonstrating the flow, but must
+  **not** be used to protect real trade pricing or customer data. A
+  production version needs a real backend with hashed passwords and
+  server-side sessions, and real trade customer accounts.
+- Prices without a listed value display as **"POA"** (Price On Application).
 
-## Replacing the placeholder data
+## Updating the data
 
-To go live with real data, replace the contents of `js/data.js`:
-
-- **`MACHINES`** — one entry per real Make / Model / Version 1 / Version 2
-  combination you sell parts for.
-- **`PARTS`** — real part numbers, names, descriptions, trade prices, and
-  `compatibleMachineIds` listing which machine(s) (by `id` from `MACHINES`)
-  each part fits. This is the compatibility / cross-reference data.
-- **`TRADE_ACCOUNTS`** — real trade customer login list (only if staying with
-  the simple client-side gate; otherwise this moves server-side).
-
-Send over the real Make/Model/Version1/Version2 list and the parts +
-compatibility/cross-reference data whenever you're ready and it can be
-dropped straight in.
+If the source spreadsheets change, re-extract them into `js/data.js`
+(the format is documented above) — send over updated
+Products/Compatibility/Cross Reference spreadsheets and it can be
+regenerated.

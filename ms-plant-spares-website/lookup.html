@@ -8,7 +8,8 @@
 </head>
 <body>
   <div class="placeholder-banner">
-    Demo build — the machines and parts below are sample placeholders, not real M&amp;S Plant Spares data.
+    Demo login — the trade account you signed in with is a sample account. Product, compatibility and
+    cross-reference data below is real M&amp;S Plant Spares data.
   </div>
 
   <header class="site-header">
@@ -62,6 +63,19 @@
       <h2>Compatible Parts</h2>
       <div id="resultsSummary" class="results-summary"></div>
       <div id="resultsTableWrap"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Search by Part Number / Cross Reference</h2>
+      <p class="helper">
+        Already know a part number, MS part number, or an OEM / cross-reference number? Search for it directly.
+      </p>
+      <form id="partSearchForm" class="part-search-form" novalidate>
+        <input type="text" id="partSearchInput" placeholder="e.g. 125790, DP65X420, 4HK1..." />
+        <button type="submit" class="primary search-btn">Search</button>
+      </form>
+      <div id="partSearchSummary" class="results-summary"></div>
+      <div id="partSearchTableWrap"></div>
     </section>
   </main>
 

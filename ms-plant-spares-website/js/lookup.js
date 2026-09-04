@@ -2,6 +2,7 @@
  * lookup.js
  * Drives the cascading Machine Lookup (Make -> Model -> Version 1 -> Version 2)
  * and the parts search/results against MACHINES / PARTS in js/data.js.
+ * Also drives the standalone Part Number / Cross Reference search.
  */
 
 let session = null;
@@ -34,7 +35,7 @@ function fillSelect(selectEl, values, placeholder) {
   values.forEach((v) => {
     const o = document.createElement("option");
     o.value = v;
-    o.textContent = v;
+    o.textContent = v === "-" ? "N/A" : v;
     selectEl.appendChild(o);
   });
 
@@ -108,35 +109,34 @@ function findMachine(make, model, version1, version2) {
   );
 }
 
-function renderParts(machine) {
+function formatPrice(price) {
+  return typeof price === "number" ? `€${price.toFixed(2)}` : "POA";
+}
+
+function renderPartsTable(parts, summaryText, emptyText) {
   const summary = document.getElementById("resultsSummary");
   const tableWrap = document.getElementById("resultsTableWrap");
 
-  if (!machine) {
-    summary.textContent = "No matching machine found for that combination.";
-    tableWrap.innerHTML = "";
-    return;
-  }
-
-  const parts = PARTS.filter((p) => p.compatibleMachineIds.includes(machine.id));
-
-  summary.textContent = `${machine.make} ${machine.model} ${machine.version1} ${machine.version2} — ${parts.length} compatible part(s) found.`;
+  summary.textContent = summaryText;
 
   if (parts.length === 0) {
-    tableWrap.innerHTML = '<p class="empty-state">No parts currently listed for this machine.</p>';
+    tableWrap.innerHTML = `<p class="empty-state">${emptyText}</p>`;
     return;
   }
 
   const rows = parts
-    .map(
-      (p) => `
+    .map((p) => {
+      const xref = p.crossReference && p.crossReference.length ? p.crossReference.join(", ") : "—";
+      return `
       <tr>
-        <td>${p.partNumber}</td>
-        <td>${p.name}</td>
-        <td>${p.description}</td>
-        <td class="price">£${p.price.toFixed(2)}</td>
-      </tr>`
-    )
+        <td>${p.sku}${p.msPartNumber ? `<br><span class="muted">MS: ${p.msPartNumber}</span>` : ""}</td>
+        <td>${p.title}</td>
+        <td>${p.subCategory}</td>
+        <td class="xref">${xref}</td>
+        <td>${p.stockStatus || ""}</td>
+        <td class="price">${formatPrice(p.price)}</td>
+      </tr>`;
+    })
     .join("");
 
   tableWrap.innerHTML = `
@@ -145,12 +145,33 @@ function renderParts(machine) {
         <tr>
           <th>Part Number</th>
           <th>Part Name</th>
-          <th>Description</th>
+          <th>Category</th>
+          <th>Cross Reference / OEM No.</th>
+          <th>Stock</th>
           <th>Trade Price</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+function renderParts(machine) {
+  if (!machine) {
+    renderPartsTable([], "No matching machine found for that combination.", "");
+    return;
+  }
+
+  const parts = PARTS.filter((p) => p.compatibleMachineIds.includes(machine.id));
+  const label = [machine.make, machine.model, machine.version1, machine.version2]
+    .map((v) => (v === "-" ? null : v))
+    .filter(Boolean)
+    .join(" ");
+
+  renderPartsTable(
+    parts,
+    `${label} — ${parts.length} compatible part(s) found.`,
+    "No parts currently listed for this machine."
+  );
 }
 
 function onSearch(event) {
@@ -169,6 +190,65 @@ function onSearch(event) {
 function onResetForm() {
   makeSelect().value = "";
   resetDownstream(1);
+}
+
+/* ---------- Part Number / Cross Reference search ---------- */
+
+function onPartSearch(event) {
+  event.preventDefault();
+  const term = document.getElementById("partSearchInput").value.trim().toLowerCase();
+  const summary = document.getElementById("partSearchSummary");
+  const tableWrap = document.getElementById("partSearchTableWrap");
+
+  if (!term) {
+    summary.textContent = "";
+    tableWrap.innerHTML = "";
+    return;
+  }
+
+  const matches = PARTS.filter((p) => {
+    if (p.sku.toLowerCase().includes(term)) return true;
+    if (p.msPartNumber && p.msPartNumber.toLowerCase().includes(term)) return true;
+    if (p.title.toLowerCase().includes(term)) return true;
+    return (p.crossReference || []).some((code) => code.toLowerCase().includes(term));
+  });
+
+  summary.textContent = `${matches.length} result(s) for "${term}".`;
+
+  if (matches.length === 0) {
+    tableWrap.innerHTML = '<p class="empty-state">No parts matched that part number or cross reference / OEM number.</p>';
+    return;
+  }
+
+  const rows = matches
+    .map((p) => {
+      const xref = p.crossReference && p.crossReference.length ? p.crossReference.join(", ") : "—";
+      return `
+      <tr>
+        <td>${p.sku}${p.msPartNumber ? `<br><span class="muted">MS: ${p.msPartNumber}</span>` : ""}</td>
+        <td>${p.title}</td>
+        <td>${p.subCategory}</td>
+        <td class="xref">${xref}</td>
+        <td>${p.stockStatus || ""}</td>
+        <td class="price">${formatPrice(p.price)}</td>
+      </tr>`;
+    })
+    .join("");
+
+  tableWrap.innerHTML = `
+    <table class="parts-table">
+      <thead>
+        <tr>
+          <th>Part Number</th>
+          <th>Part Name</th>
+          <th>Category</th>
+          <th>Cross Reference / OEM No.</th>
+          <th>Stock</th>
+          <th>Trade Price</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -190,6 +270,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("lookupForm").addEventListener("submit", onSearch);
   document.getElementById("resetBtn").addEventListener("click", onResetForm);
+
+  document.getElementById("partSearchForm").addEventListener("submit", onPartSearch);
 
   updateSearchButtonState();
 });
