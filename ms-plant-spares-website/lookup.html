@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M&amp;S Plant Spares — Machine Lookup</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="placeholder-banner">
+    Demo build — the machines and parts below are sample placeholders, not real M&amp;S Plant Spares data.
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="mark">M&amp;S</span>
+      M&amp;S Plant Spares
+      <span class="tagline">Trade Portal</span>
+    </div>
+    <div class="user-area">
+      <span id="welcomeText"></span>
+      <button id="logoutBtn" type="button">Log Out</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Machine Lookup</h2>
+      <p class="helper">
+        Select your machine's Make, Model, Version 1 and Version 2, then click Search
+        to find compatible parts.
+      </p>
+
+      <form id="lookupForm" novalidate>
+        <div class="lookup-grid">
+          <div class="field">
+            <label for="make">Make</label>
+            <select id="make"></select>
+          </div>
+          <div class="field">
+            <label for="model">Model</label>
+            <select id="model" disabled></select>
+          </div>
+          <div class="field">
+            <label for="version1">Version 1</label>
+            <select id="version1" disabled></select>
+          </div>
+          <div class="field">
+            <label for="version2">Version 2</label>
+            <select id="version2" disabled></select>
+          </div>
+        </div>
+
+        <div class="lookup-actions">
+          <button type="submit" id="searchBtn" class="primary search-btn" disabled>Search</button>
+          <button type="button" id="resetBtn" class="secondary">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Compatible Parts</h2>
+      <div id="resultsSummary" class="results-summary"></div>
+      <div id="resultsTableWrap"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    &copy; M&amp;S Plant Spares. Trade customers only.
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/lookup.js"></script>
+</body>
+</html>
