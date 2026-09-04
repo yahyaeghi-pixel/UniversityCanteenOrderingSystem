@@ -6,7 +6,7 @@ public class CreateAccountApp {
 
     public static void main(String[] args) {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         AccountCreationService service = new AccountCreationService();
 
         System.out.println("===== Create New Account =====");
@@ -17,12 +17,11 @@ public class CreateAccountApp {
         System.out.print("Enter Password: ");
         String password = sc.nextLine();
 
-        System.out.print("Enter Role (student/lecturer): ");
+        System.out.print("Enter Role (student/lecturer/staff): ");
         String role = sc.nextLine().toLowerCase();
 
-        if (!role.equals("student") && !role.equals("lecturer")) {
-            System.out.println("Invalid role. Must be 'student' or 'lecturer'.");
-            sc.close();
+        if (!role.equals("student") && !role.equals("lecturer") && !role.equals("staff")) {
+            System.out.println("Invalid role. Must be 'student', 'lecturer', or 'staff'.");
             return;
         }
 
@@ -34,6 +33,5 @@ public class CreateAccountApp {
             System.out.println("Account creation failed.");
         }
 
-        sc.close();
     }
 }

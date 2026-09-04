@@ -7,7 +7,7 @@ public class StaffFeedbackDashboard {
 
     public static void showDashboard() {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         int choice = 0;
 
         while (choice != 4) {
@@ -72,7 +72,7 @@ public class StaffFeedbackDashboard {
 
     private static void searchFeedbackByEmail() {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         System.out.print("Enter email: ");
         String email = sc.nextLine();
 
@@ -105,7 +105,7 @@ public class StaffFeedbackDashboard {
 
         viewAllFeedback();
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         System.out.print("Enter feedback number to delete: ");
 
         int index;

@@ -10,10 +10,10 @@ public class StudentDashboard {
 
     public static void showDashboard(String studentEmail) {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         int choice = 0;
 
-        while (choice != 9) {
+        while (choice != 8) {
 
             System.out.println("\n===== Student Dashboard =====");
             System.out.println("Logged in as: " + studentEmail);
@@ -41,18 +41,19 @@ public class StudentDashboard {
                     break;
 
                 case 2:
-                    placeOrder(studentEmail);
-                    break;
-
-                case 3:
-                    viewMyOrders(studentEmail);
-                    break;
-                case 4:
                     addItemToBasket();
                     break;
 
-                case 5:
+                case 3:
                     viewBasket();
+                    break;
+
+                case 4:
+                    checkout(studentEmail);
+                    break;
+
+                case 5:
+                    viewMyOrders(studentEmail);
                     break;
 
                 case 6:
@@ -60,14 +61,10 @@ public class StudentDashboard {
                     break;
 
                 case 7:
-                    checkout(studentEmail);
-                    break;
-
-                case 8:
                     giveFeedback(studentEmail);
                     break;
 
-                case 9:
+                case 8:
                     System.out.println("Logging out...");
                     return;
 
@@ -94,58 +91,6 @@ public class StudentDashboard {
         }
     }
     
-    // Simple placeholder for placing an order
-    private static void placeOrder(String email) {
-
-        var menu = MenuDatabase.loadMenu();
-
-        if (menu.isEmpty()) {
-            System.out.println("Menu not available.");
-            return;
-        }
-
-        System.out.println("\n===== Place an Order =====");
-
-        // Show menu with numbers
-        for (int i = 0; i < menu.size(); i++) {
-            MenuItem item = menu.get(i);
-            System.out.println((i + 1) + ". " + item.getName() + " – €" + item.getPrice());
-        }
-
-        System.out.print("Choose item number: ");
-        Scanner sc = new Scanner(System.in);
-        int choice;
-
-        try {
-            choice = Integer.parseInt(sc.nextLine());
-        } catch (Exception e) {
-            System.out.println("Invalid choice.");
-            return;
-        }
-
-        // Validate choice
-        if (choice < 1 || choice > menu.size()) {
-            System.out.println("Invalid item number.");
-            return;
-        }
-
-        MenuItem selected = menu.get(choice - 1);
-
-        // Get current date/time
-        String datetime = java.time.LocalDateTime.now().toString();
-
-        for (BasketItem item : basket) {
-            Order order = new Order(email, item.getName(), item.getPrice(), datetime, "Pending");
-            OrderDatabase.saveOrder(order);
-        }
-
-
-        System.out.println("Order placed successfully!");
-        System.out.println("Item: " + selected.getName());
-        System.out.println("Price: €" + selected.getPrice());
-    }
-
-
     // Placeholder for later order history
     private static void viewMyOrders(String email) {
 
@@ -188,7 +133,7 @@ public class StudentDashboard {
         }
 
         System.out.print("Choose item number: ");
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         int choice;
 
         try {
@@ -212,7 +157,7 @@ public class StudentDashboard {
     // Checkout and clear the basket
     private static void viewBasket() {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
 
         System.out.println("\n===== Your Basket =====");
 
@@ -273,7 +218,7 @@ public class StudentDashboard {
         System.out.println("Total amount: €" + total);
 
         System.out.print("Proceed to payment? (yes/no): ");
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         String ans = sc.nextLine();
 
         if (!ans.equalsIgnoreCase("yes")) {
@@ -324,7 +269,7 @@ public class StudentDashboard {
 
     // Later we will save feedback to a file
     private static void giveFeedback(String email) {
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
 
         System.out.println("\n===== Submit Feedback =====");
         System.out.println("Write your feedback message:");

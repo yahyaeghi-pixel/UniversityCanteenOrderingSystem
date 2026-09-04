@@ -6,7 +6,7 @@ public class LoginApp {
 
     public static void main(String[] args) {
 
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = Console.IN;
         LoginService service = new LoginService();
 
         System.out.println("===== University Canteen Login =====");
@@ -28,12 +28,14 @@ public class LoginApp {
             else if (loggedIn.getRole().equals("student")) {
                 StudentDashboard.showDashboard(loggedIn.getEmail());
             }
+            else if (loggedIn.getRole().equals("staff")) {
+                StaffDashboard.showDashboard();
+            }
 
 
         } else {
             System.out.println("Invalid email or password. Try again.");
         }
 
-        sc.close();
     }
 }
